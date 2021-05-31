@@ -144,7 +144,7 @@ export default function Home() {
                     <pre>
                         <code>
                             export interface {nameUppercase}Obj &#123;<br/>
-                            {fields.map(field => `\t ${field.fieldName}${field.required ? "" : "?"}: ${field.type === "ObjectId" ? "string" : field.type}; \n`)}
+                            {fields.map(field => `\t ${field.fieldName}${field.required ? "" : "?"}: ${field.type === "ObjectId" ? "string" : field.type}${field.typeIsArray ? "[]" : ""}; \n`)}
                             &#125;
                         </code>
                     </pre>
