@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import FlexContainer from "../components/FlexContainer";
 import FlexChild from "../components/FlexChild";
 
@@ -9,62 +9,101 @@ interface fieldType {
     required: boolean,
 }
 
+function addNewField(fields: fieldType[], setFields: Dispatch<SetStateAction<fieldType[]>>) {
+    const newFields: fieldType[] = [
+        ...fields,
+        {
+            fieldName: "",
+            type: "string",
+            typeIsArray: false,
+            required: true,
+        },
+    ];
+
+    setFields(newFields);
+}
+
 export default function Home() {
     const [fields, setFields] = useState<fieldType[]>([]);
     const [name, setName] = useState<string>("");
 
-    function addNewField() {
-        const newFields: fieldType[] = [
-            ...fields,
-            {
-                fieldName: "",
-                type: "string",
-                typeIsArray: false,
-                required: true,
-            },
-        ];
-
-        setFields(newFields);
-    }
-
     const nameUppercase = name.slice(0, 1).toUpperCase() + name.slice(1);
+
+    useEffect(() => {
+        function addNewFieldShortcutHandler(e: KeyboardEvent) {
+            if (e.key === "n" && document.activeElement.tagName !== "INPUT") {
+                addNewField(fields, setFields);
+            }
+        }
+
+        window.addEventListener("keydown", addNewFieldShortcutHandler);
+
+        return () => window.removeEventListener("keydown", addNewFieldShortcutHandler);
+    }, [fields]);
+
+    useEffect(() => {
+        if (fields.length) {
+            localStorage.setItem("nextgenModelFields", JSON.stringify(fields));
+        }
+    }, [fields]);
+
+    useEffect(() => {
+        if (name) {
+            localStorage.setItem("nextgenModelName", name);
+        }
+    }, [name]);
+
+    useEffect(() => {
+        const savedFields = localStorage.getItem("nextgenModelFields");
+        const savedName = localStorage.getItem("nextgenModelName");
+        if (savedFields) {
+            const savedFieldsParsed = JSON.parse(savedFields);
+            setFields(savedFieldsParsed);
+        }
+        if (savedName) setName(savedName);
+    }, []);
 
     return (
         <>
             <h1>Mongoose/Typescript Model Code Generator</h1>
             <hr/>
             <h2>Model name</h2>
-            <input type="text" value={name} onChange={e => setName(e.target.value.toLowerCase())}/>
+            <input type="text" value={name} onChange={e => {
+                setName(e.target.value.toLowerCase());
+            }}/>
             <hr/>
             <FlexContainer>
                 <FlexChild>
                     <h2>Params</h2>
-                    <button onClick={addNewField}>Add new field</button>
+                    <button onClick={() => addNewField(fields, setFields)}>Add new field (n)</button>
                     {fields.map((field, i) => (
                         <div key={i} style={{padding: 16, border: "1px solid #efefef", borderRadius: 16, marginBottom: 16, marginTop: 16}}>
                             <p>Field Name</p>
                             <input
-                                type="text" value={field.fieldName} onChange={e => {
-                                let newFields = [...fields];
-                                fields[i].fieldName = e.target.value;
-                                setFields(newFields);
-                            }}
+                                type="text"
+                                value={field.fieldName}
+                                onChange={e => {
+                                    let newFields = [...fields];
+                                    fields[i].fieldName = e.target.value;
+                                    setFields(newFields);
+                                }}
                             />
                             <FlexContainer>
                                 <FlexChild>
                                     <p>Field type</p>
                                     <select
-                                        value={field.type + (field.typeIsArray ? "[]" : "")} onChange={e => {
-                                        let newFields = [...fields];
-                                        if (e.target.value.slice(-2) === "[]") {
-                                            fields[i].typeIsArray = true;
-                                            fields[i].type = e.target.value.slice(0, -2) as "string" | "number" | "ObjectId" | "boolean";
-                                        } else {
-                                            fields[i].typeIsArray = false;
-                                            fields[i].type = e.target.value as "string" | "number" | "ObjectId" | "boolean";
-                                        }
-                                        setFields(newFields);
-                                    }}
+                                        value={field.type + (field.typeIsArray ? "[]" : "")}
+                                        onChange={e => {
+                                            let newFields = [...fields];
+                                            if (e.target.value.slice(-2) === "[]") {
+                                                fields[i].typeIsArray = true;
+                                                fields[i].type = e.target.value.slice(0, -2) as "string" | "number" | "ObjectId" | "boolean";
+                                            } else {
+                                                fields[i].typeIsArray = false;
+                                                fields[i].type = e.target.value as "string" | "number" | "ObjectId" | "boolean";
+                                            }
+                                            setFields(newFields);
+                                        }}
                                     >
                                         <option value="string">String</option>
                                         <option value="string[]">String array</option>
@@ -81,10 +120,10 @@ export default function Home() {
                                         <label htmlFor="fieldRequired">
                                             <input
                                                 type="checkbox" id="fieldRequired" checked={fields[i].required} onChange={e => {
-                                                let newFields = [...fields];
-                                                fields[i].required = e.target.checked;
-                                                setFields(newFields);
-                                            }}
+                                                    let newFields = [...fields];
+                                                    fields[i].required = e.target.checked;
+                                                    setFields(newFields);
+                                                }}
                                             />
                                             Required
                                         </label>
