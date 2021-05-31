@@ -11,6 +11,7 @@ class MyDocument extends Document {
             <Html>
                 <Head>
                     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"/>
+                    <title>NextGen: Generate code for your Next.js app</title>
                 </Head>
                 <body>
                     <Main />
