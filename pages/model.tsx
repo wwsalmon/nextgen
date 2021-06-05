@@ -2,10 +2,13 @@ import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import FlexContainer from "../components/FlexContainer";
 import FlexChild from "../components/FlexChild";
 import Link from "next/link";
+import EndpointGenerator from "../components/EndpointGenerator";
 
-interface fieldType {
+export type valueType = "string" | "number" | "ObjectId" | "boolean";
+
+export interface fieldType {
     fieldName: string,
-    type: "string" | "number" | "ObjectId" | "boolean",
+    type: valueType,
     typeIsArray: boolean,
     required: boolean,
 }
@@ -67,7 +70,7 @@ export default function Model() {
     return (
         <>
             <Link href="/"><a>🠐 Back home</a></Link>
-            <h1>Mongoose/Typescript Model Code Generator</h1>
+            <h1>Mongoose/Typescript/Next Model & API Code Generator</h1>
             <hr/>
             <h2>Model name</h2>
             <input type="text" value={name} onChange={e => {
@@ -76,7 +79,7 @@ export default function Model() {
             <hr/>
             <FlexContainer>
                 <FlexChild>
-                    <h2>Params</h2>
+                    <h2>Schema</h2>
                     <button onClick={() => addNewField(fields, setFields)}>Add new field (n)</button>
                     {fields.map((field, i) => (
                         <div key={i} style={{padding: 16, border: "1px solid #efefef", borderRadius: 16, marginBottom: 16, marginTop: 16}}>
@@ -172,6 +175,8 @@ export default function Model() {
                     </pre>
                 </FlexChild>
             </FlexContainer>
+            <hr/>
+            <EndpointGenerator fields={fields} nameUppercase={nameUppercase}/>
         </>
     )
 }

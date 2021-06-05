@@ -18,7 +18,9 @@ export default function Home({}: {  }) {
             <h2>Templates</h2>
             <p><a href="https://github.com/wwsalmon/next-tailwind-typescript-example">🔗 next-tailwind-typescript-example</a> - set up NextJS, Tailwind, and Typescript in one CLI command</p>
             <h2>Generators</h2>
-            <p><Link href="/model"><a>Mongoose + Typescript model generator</a></Link>: generate a Mongoose model file and typing given an object schema</p>
+            <p><Link href="/model"><a>
+                Mongoose/Typescript/Next Model & API Code Generator
+            </a></Link>: generate a Mongoose model file, Typescript typing, and NextJS API endpoint given an object schema and API params</p>
         </>
     );
 }
