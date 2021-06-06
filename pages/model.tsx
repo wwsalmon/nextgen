@@ -153,7 +153,7 @@ export default function Model() {
                             &#125;
                         </code>
                     </pre>
-                    <h3>models/{name}.ts</h3>
+                    <h3>models/{nameUppercase}.ts</h3>
                     <pre>
                         <code>
                             import mongoose, &#123;Document, Model&#125; from "mongoose";<br/>

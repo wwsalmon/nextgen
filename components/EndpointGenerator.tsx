@@ -16,9 +16,12 @@ export type EndpointFieldObj = {
 
 export default function EndpointGenerator({nameUppercase, fields}: { nameUppercase: string, fields: fieldType[] }) {
     const [allowPost, setAllowPost] = useState<boolean>(false);
-    const [postRequireAuth, setPostRequireAuth] = useState<boolean>(false);
+    const [postRequireAuth, setPostRequireAuth] = useState<boolean>(true);
     const [allowGet, setAllowGet] = useState<boolean>(false);
-    const [getRequireAuth, setGetRequireAuth] = useState<boolean>(false);
+    const [getRequireAuth, setGetRequireAuth] = useState<boolean>(true);
+    const [getSingle, setGetSingle] = useState<boolean>(true);
+    const [getPagination, setGetPagination] = useState<boolean>(false);
+    const [paginationSkip, setPaginationSkip] = useState<number>(10);
     const [postFields, setPostFields] = useState<EndpointFieldObj>({});
     const [getFields, setGetFields] = useState<EndpointFieldObj>({});
 
@@ -48,6 +51,9 @@ export default function EndpointGenerator({nameUppercase, fields}: { nameUpperca
         {fieldName: fieldName, fieldType: fieldParam.type, fieldValue: fieldParam.value}
     ));
 
+    const authSnippet = `const session = await getSession({ req });
+            if (!session) return res.status(403);`;
+
     function getSessionParam(type: userParams) {
         return {
             userId: "userId",
@@ -58,45 +64,72 @@ export default function EndpointGenerator({nameUppercase, fields}: { nameUpperca
         }[type];
     }
 
+    function getFieldParam(fieldType: endpointFieldSetting, fieldValue: string, fieldName: string, isPost: boolean) {
+        return {
+            default: fieldValue,
+            param: `req.${isPost ? "body" : "query"}.${fieldName}`,
+            userId: "session.userId",
+            userName: "session.user.name",
+            userUsername: "session.username",
+            userImage: "session.user.image",
+            userEmail: "session.user.email",
+        }[fieldType];
+    }
+
     return (
         <FlexContainer>
             <FlexChild>
                 <h2>Endpoint params</h2>
                 <h3>Get</h3>
-                <CheckControl onChange={e => setAllowGet(e.target.checked)} label="Allow?" id="allowGet"/>
-                <CheckControl onChange={e => setGetRequireAuth(e.target.checked)} label="Require auth?" id="getAuth"/>
+                <CheckControl value={allowGet} onChange={e => setAllowGet(e.target.checked)} label="Allow?" id="allowGet"/>
                 {allowGet && (
-                    <EndpointParams
-                        endpointFields={getFields}
-                        setEndpointFields={setGetFields}
-                        requireAuth={getRequireAuth}
-                    />
+                    <>
+                        <CheckControl value={getRequireAuth} onChange={e => setGetRequireAuth(e.target.checked)} label="Require auth?" id="getAuth"/>
+                        <CheckControl value={getSingle} onChange={e => setGetSingle(e.target.checked)} label="Get single document?" id="getSingle"/>
+                        {!getSingle && (
+                            <>
+                                <CheckControl value={getPagination} onChange={e => setGetPagination(e.target.checked)} label="Enable pagination?" id="getPagination"/>
+                                {getPagination && (
+                                    <input type="number" value={paginationSkip} onChange={e => setPaginationSkip(+e.target.value)}/>
+                                )}
+                            </>
+                        )}
+                        <EndpointParams
+                            endpointFields={getFields}
+                            setEndpointFields={setGetFields}
+                            requireAuth={getRequireAuth}
+                        />
+                    </>
                 )}
                 <h3>Post</h3>
-                <CheckControl onChange={e => setAllowPost(e.target.checked)} label="Allow?" id="allowPost"/>
-                <CheckControl onChange={e => setPostRequireAuth(e.target.checked)} label="Require auth?" id="postAuth"/>
+                <CheckControl value={allowPost} onChange={e => setAllowPost(e.target.checked)} label="Allow?" id="allowPost"/>
                 {allowPost && (
-                    <EndpointParams
-                        endpointFields={postFields}
-                        setEndpointFields={setPostFields}
-                        requireAuth={postRequireAuth}
-                    />
+                    <>
+                        <CheckControl value={postRequireAuth} onChange={e => setPostRequireAuth(e.target.checked)} label="Require auth?" id="postAuth"/>
+                        <EndpointParams
+                            endpointFields={postFields}
+                            setEndpointFields={setPostFields}
+                            requireAuth={postRequireAuth}
+                        />
+                    </>
                 )}
             </FlexChild>
             <FlexChild>
                 <h2>Code output</h2>
                 <pre>
                     <code>
-                        {`import {${nameUppercase}Obj} from "../../../utils/types";
-import {${nameUppercase} from "../../../models/${nameUppercase.toLowerCase()}";
+                        {`import ${nameUppercase}Model from "../../../models/${nameUppercase}";
+import dbConnect from "../../utils/dbConnect";
+import {NextApiRequest, NextApiResponse} from "next";
+${((allowPost && postRequireAuth) || (allowGet && getRequireAuth)) ? "import {getSession} from \"next-auth/client\";" : ""}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
         ${allowPost ? `case "POST":
-            ${postRequireAuth ?
-            `const session = await getSession({ req });
-            if (!session) return res.status(403);` : ""}
+            ${postRequireAuth ? authSnippet : ""}
             try {
+                await dbConnect();
+                
                 if (req.body.id) {
                     if (!(${PostFieldsArr.filter(d => d.fieldType === "param").map(({fieldName}, i) => `${i === 0 ? "" : " || "}req.body.${fieldName}`).join("")})) {
                         return res.status(406);            
@@ -118,15 +151,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     
                     await ${nameUppercase}Model.create({
                         ${PostFieldsArr.map(({fieldName, fieldType, fieldValue}) =>
-                        `${fieldName}: ${{
-                            default: fieldValue,
-                            param: `req.body.${fieldName}`,
-                            userId: "session.userId",
-                            userName: "session.user.name",
-                            userUsername: "session.username",
-                            userImage: "session.user.image",
-                            userEmail: "session.user.email",                            
-                        }[fieldType]};`).join("\n\t\t\t")}                    
+                        `${fieldName}: ${getFieldParam(fieldType, fieldValue, fieldName, true)},`).join("\n\t\t\t")}                    
                     });
                     
                     return res.status(200).json({message: "Object created"});
@@ -136,7 +161,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         ` : ""}    
         ${allowGet ? `case "GET":
-            ${getRequireAuth ? "const session = await getSession({ req });" : ""}
+            ${getRequireAuth ? authSnippet : ""}
+            if (!(${GetFieldsArr.filter(d => d.fieldType === "param").map(({fieldName}, i) => `${i === 0 ? "" : " || "}req.query.${fieldName}`).join("")})) {
+                return res.status(406);                        
+            }
+            
+            try {                
+                let conditions = {};
+
+                if (req.query.id) conditions["_id"] = req.query.id;
+                ${GetFieldsArr.filter(d => d.fieldType !== "default").map(({fieldName, fieldType}) => `if (req.query.${fieldName}) conditions["${fieldName}"] = ${getFieldParam(fieldType, "", fieldName, false)};
+                `).join("")}
+                         
+                await dbConnect();   
+            
+                const thisObject = await ${nameUppercase}Model.aggregate([
+                    {$match: conditions},
+                    ${getPagination ? `{$skip: (+req.query.page - 1) * ${paginationSkip}},
+                    {$limit: ${paginationSkip}},` : ""}
+                ]);
+                
+                if (!thisObject) return res.status(404);
+                
+                return res.status(200).json({data: thisObject});
+            } catch (e) {
+                return res.status(500).json({message: e});                        
+            }
         ` : ""}    
         default:
             return res.status(405);
