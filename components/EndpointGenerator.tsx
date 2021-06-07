@@ -232,10 +232,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         return res.status(406);            
                     }
                     
-                    await ${nameUppercase}Model.create({
+                    const new${nameUppercase} = new ${nameUppercase}Model({
                         ${PostFieldsArr.map(({fieldName, fieldType, fieldValue}) =>
-                        `${fieldName}: ${getFieldParam(fieldType, fieldValue, fieldName, true)},`).join("\n\t\t\t")}                    
+                        `${fieldName}: ${getFieldParam(fieldType, fieldValue, fieldName, true)},`).join("\n\t\t\t")}                             
                     });
+                    
+                    await new${nameUppercase}.save();
                     
                     return res.status(200).json({message: "Object created"});
                 }            

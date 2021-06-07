@@ -159,6 +159,8 @@ export default function Model() {
                             import mongoose, &#123;Document, Model&#125; from "mongoose";<br/>
                             import &#123;{nameUppercase}Obj&#125; from "../utils/types";<br/>
                             <br/>
+                            interface {nameUppercase}Doc extends {nameUppercase}Obj, Document &#123;&#125;<br/>
+                            <br/>
                             const {nameUppercase}Schema = new mongoose.Schema(&#123;<br/>
                             {fields.map(field => `\t${field.fieldName}: { required: ${field.required.toString()}, type: ${{
                                 string: "String",
@@ -170,7 +172,7 @@ export default function Model() {
                             {"\t"}timestamps: true,<br/>
                             &#125;);<br/>
                             <br/>
-                            export const {nameUppercase}Model: Model&lt;Document&lt;{nameUppercase}Obj&gt;&gt; = mongoose.models.{name} || mongoose.model("{name}", {nameUppercase}Schema);
+                            export const {nameUppercase}Model = mongoose.models.{name} || mongoose.model&lt;{nameUppercase}Doc&gt;("{name}", {nameUppercase}Schema);
                         </code>
                     </pre>
                 </FlexChild>
