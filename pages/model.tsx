@@ -162,12 +162,12 @@ export default function Model() {
                             interface {nameUppercase}Doc extends {nameUppercase}Obj, Document &#123;&#125;<br/>
                             <br/>
                             const {nameUppercase}Schema = new mongoose.Schema(&#123;<br/>
-                            {fields.map(field => `\t${field.fieldName}: { required: ${field.required.toString()}, type: ${{
+                            {fields.map(field => `\t${field.fieldName}: { required: ${field.required.toString()}, type: ${(field.typeIsArray ? "[" : "") + {
                                 string: "String",
                                 number: "Number",
                                 boolean: "Boolean",
                                 ObjectId: "mongoose.Schema.Types.ObjectId",
-                            }[field.type]} }, \n`)}
+                            }[field.type] + (field.typeIsArray ? "]" : "")} }, \n`)}
                             &#125;, &#123;<br/>
                             {"\t"}timestamps: true,<br/>
                             &#125;);<br/>
