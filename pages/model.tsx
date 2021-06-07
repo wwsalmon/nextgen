@@ -122,9 +122,9 @@ export default function Model() {
                                 <FlexChild>
                                     <p>Field required?</p>
                                     <div>
-                                        <label htmlFor="fieldRequired">
+                                        <label htmlFor={"fieldRequired" + i}>
                                             <input
-                                                type="checkbox" id="fieldRequired" checked={fields[i].required} onChange={e => {
+                                                type="checkbox" id={"fieldRequired" + i} checked={fields[i].required} onChange={e => {
                                                 let newFields = [...fields];
                                                 fields[i].required = e.target.checked;
                                                 setFields(newFields);
