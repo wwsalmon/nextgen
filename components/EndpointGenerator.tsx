@@ -237,9 +237,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         `${fieldName}: ${getFieldParam(fieldType, fieldValue, fieldName, true)},`).join("\n\t\t\t")}                             
                     });
                     
-                    await new${nameUppercase}.save();
+                    const saved${nameUppercase} = await new${nameUppercase}.save();
                     
-                    return res.status(200).json({message: "Object created"});
+                    return res.status(200).json({message: "Object created", id: saved${nameUppercase}._id.toString());
                 }            
             } catch (e) {
                 return res.status(500).json({message: e});            
