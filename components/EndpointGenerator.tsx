@@ -172,14 +172,14 @@ export default function EndpointGenerator({nameUppercase, fields}: { nameUpperca
                 <h2>Code output</h2>
                 <pre>
                     <code>
-                        {`import ${nameUppercase}Model from "../../../models/${nameUppercase}";
+                        {`import {${nameUppercase}Model} from "../../../models/${nameUppercase}";
 import dbConnect from "../../utils/dbConnect";
 import {NextApiRequest, NextApiResponse} from "next";
 ${((allowPost && postRequireAuth) || (allowGet && getRequireAuth)) ? "import {getSession} from \"next-auth/client\";" : ""}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {    
-        ${allowGet ? `case "GET":
+        ${allowGet ? `case "GET": {
             ${getRequireAuth ? authSnippet : ""}
             if (!(${GetFieldsArr.filter(d => d.fieldType === "param").map(({fieldName}, i) => `${i === 0 ? "" : " || "}req.query.${fieldName}`).join("")})) {
                 return res.status(406);                        
@@ -189,7 +189,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 let conditions = {};
 
                 if (req.query.id) conditions["_id"] = req.query.id;
-                ${GetFieldsArr.filter(d => d.fieldType !== "default").map(({fieldName, fieldType}) => `if (req.query.${fieldName}) conditions["${fieldName}"] = ${getFieldParam(fieldType, "", fieldName, false)};
+                ${GetFieldsArr.filter(d => d.fieldType !== "default").map(({fieldName, fieldType}) => `${fieldType.slice(0, 4) === "user" ? "" : `if (req.query.${fieldName}) `}conditions["${fieldName}"] = ${getFieldParam(fieldType, "", fieldName, false)};
                 `).join("")}
                          
                 await dbConnect();   
@@ -200,14 +200,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     {$limit: ${paginationSkip}},` : ""}
                 ]);
                 
-                if (!thisObject) return res.status(404);
+                if (!thisObject || !thisObject.length) return res.status(404);
                 
-                return res.status(200).json({data: thisObject});
+                return res.status(200).json({data: ${getSingle ? "thisObject[0]" : "thisObject"}});
             } catch (e) {
                 return res.status(500).json({message: e});                        
             }
+        }
         ` : ""}    
-        ${allowPost ? `case "POST":
+        ${allowPost ? `case "POST": {
             ${postRequireAuth ? authSnippet : ""}
             try {
                 await dbConnect();
@@ -241,8 +242,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             } catch (e) {
                 return res.status(500).json({message: e});            
             }
+        }
         ` : ""}
-        ${allowDelete ? `case "DELETE":
+        ${allowDelete ? `case "DELETE": {
             ${authSnippet}
             
             if (!req.body.id) return res.status(406);
@@ -261,6 +263,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             } catch (e) {
                 return res.status(500).json({message: e});
             }
+        }
         ` : ""}
         default:
             return res.status(405);
