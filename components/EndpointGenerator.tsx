@@ -88,7 +88,7 @@ export default function EndpointGenerator({nameUppercase, fields}: { nameUpperca
                 <pre>
                     <code>
                         {`import {${nameUppercase}Obj} from "../../../utils/types";
-import {${nameUppercase} from "../../../models/${nameUppercase.toLowerCase()}";
+import {${nameUppercase} from "../../../models/${nameUppercase.charAt(0).toLowerCase() + nameUppercase.slice(1)}";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {

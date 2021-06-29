@@ -74,7 +74,7 @@ export default function Model() {
             <hr/>
             <h2>Model name</h2>
             <input type="text" value={name} onChange={e => {
-                setName(e.target.value.toLowerCase());
+                setName(e.target.value);
             }}/>
             <hr/>
             <FlexContainer>
