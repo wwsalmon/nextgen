@@ -122,9 +122,9 @@ export default function Model() {
                                 <FlexChild>
                                     <p>Field required?</p>
                                     <div>
-                                        <label htmlFor="fieldRequired">
+                                        <label htmlFor={"fieldRequired" + i}>
                                             <input
-                                                type="checkbox" id="fieldRequired" checked={fields[i].required} onChange={e => {
+                                                type="checkbox" id={"fieldRequired" + i} checked={fields[i].required} onChange={e => {
                                                 let newFields = [...fields];
                                                 fields[i].required = e.target.checked;
                                                 setFields(newFields);
@@ -153,24 +153,26 @@ export default function Model() {
                             &#125;
                         </code>
                     </pre>
-                    <h3>models/{name}.ts</h3>
+                    <h3>models/{nameUppercase}.ts</h3>
                     <pre>
                         <code>
                             import mongoose, &#123;Document, Model&#125; from "mongoose";<br/>
                             import &#123;{nameUppercase}Obj&#125; from "../utils/types";<br/>
                             <br/>
+                            interface {nameUppercase}Doc extends {nameUppercase}Obj, Document &#123;&#125;<br/>
+                            <br/>
                             const {nameUppercase}Schema = new mongoose.Schema(&#123;<br/>
-                            {fields.map(field => `\t${field.fieldName}: { required: ${field.required.toString()}, type: ${{
+                            {fields.map(field => `\t${field.fieldName}: { required: ${field.required.toString()}, type: ${(field.typeIsArray ? "[" : "") + {
                                 string: "String",
                                 number: "Number",
                                 boolean: "Boolean",
                                 ObjectId: "mongoose.Schema.Types.ObjectId",
-                            }[field.type]} }, \n`)}
+                            }[field.type] + (field.typeIsArray ? "]" : "")} }, \n`)}
                             &#125;, &#123;<br/>
                             {"\t"}timestamps: true,<br/>
                             &#125;);<br/>
                             <br/>
-                            export const {nameUppercase}Model: Model&lt;Document&lt;{nameUppercase}Obj&gt;&gt; = mongoose.models.{name} || mongoose.model("{name}", {nameUppercase}Schema);
+                            export const {nameUppercase}Model = mongoose.models.{name} || mongoose.model&lt;{nameUppercase}Doc&gt;("{name}", {nameUppercase}Schema);
                         </code>
                     </pre>
                 </FlexChild>
